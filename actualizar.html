@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Actualizar mi solicitud | SUNAT Perú</title><link rel="stylesheet" href="css/actualizar.css"></head><body><header class="cabecera-sitio">
+  <div class="barra-gobierno">
+    <div class="contenedor barra-gobierno-contenido">
+      <a class="marca-estado" href="index.html" aria-label="Ir al inicio">
+        <span class="pe">PE</span>
+        <span><strong>gob.pe</strong><small>Plataforma digital del Estado Peruano</small></span>
+      </a>
+      <span class="estado-servicio"><i></i> Servicios disponibles</span>
+    </div>
+  </div>
+  <div class="navegacion-principal">
+    <div class="contenedor nav-contenido">
+      <a class="marca-sunat" href="index.html"><span class="rombo">◆</span><span>SUNAT</span></a>
+      <nav class="menu" aria-label="Navegación principal">
+        <a href="index.html">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="registro.html">Clave SOL</a>
+        <a href="cronograma.html">Cronograma</a>
+        <a href="contacto.html">Contacto</a>
+      <a href="consulta.html">Mis solicitudes</a><a href="panel.html">Panel</a></nav>
+      <a class="boton boton-cuenta" href="login.html">Mi cuenta</a>
+    </div>
+  </div>
+</header><main><section class="cabecera-pagina"><div class="contenedor"><h1>Actualizar mi solicitud</h1><strong id="nombre-sesion"></strong> <button id="boton-cerrar-sesion" type="button">Cerrar sesión</button></div></section><section class="seccion"><div class="contenedor"><p><a href="registro.html">Nueva solicitud</a> · <a href="consulta.html">Mis solicitudes</a></p><p id="mensaje" class="mensaje-form" role="status"></p><p>Solo puedes editar tus solicitudes en estado registrado.</p><form id="form-editar" class="formulario-moderno" hidden><label for="nombre">Nombre del contribuyente</label><input id="nombre" name="nombre_contribuyente" minlength="3" maxlength="120" required>
+<label for="ruc">RUC</label><input id="ruc" name="ruc" pattern="[0-9]{11}" maxlength="11" inputmode="numeric" required>
+<label for="correo">Correo</label><input id="correo" name="correo" type="email" maxlength="120" required><button class="boton boton-primario" type="submit">Guardar cambios</button></form></div></section></main><footer class="pie">
+  <div class="contenedor pie-contenido">
+    <div class="pie-marca"><strong>◆ SUNAT</strong><span>Administración tributaria nacional</span></div>
+    <div class="pie-enlaces"><a href="servicios.html">Servicios</a><a href="login.html">Acceso</a><a href="contacto.html">Contacto</a></div>
+  </div>
+</footer><script type="module" src="js/actualizar/actualizar.js"></script><script type="module" src="js/interfaz/animaciones.js"></script></body></html>

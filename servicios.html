@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Servicios SUNAT: validación de RUC y orientación sobre Clave SOL">
+  <title>Servicios | SUNAT Perú</title>
+  <link rel="stylesheet" href="css/servicios.css">
+</head>
+<body>
+<header class="cabecera-sitio">
+  <div class="barra-gobierno">
+    <div class="contenedor barra-gobierno-contenido">
+      <a class="marca-estado" href="index.html" aria-label="Ir al inicio">
+        <span class="pe">PE</span>
+        <span><strong>gob.pe</strong><small>Plataforma digital del Estado Peruano</small></span>
+      </a>
+      <span class="estado-servicio"><i></i> Servicios disponibles</span>
+    </div>
+  </div>
+  <div class="navegacion-principal">
+    <div class="contenedor nav-contenido">
+      <a class="marca-sunat" href="index.html"><span class="rombo">◆</span><span>SUNAT</span></a>
+      <nav class="menu" aria-label="Navegación principal">
+        <a href="index.html">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="registro.html">Clave SOL</a>
+        <a href="cronograma.html">Cronograma</a>
+        <a href="contacto.html">Contacto</a>
+      <a href="consulta.html">Mis solicitudes</a><a href="panel.html">Panel</a></nav>
+      <a class="boton boton-cuenta" href="login.html">Mi cuenta</a>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="cabecera-pagina cabecera-servicios"><div class="contenedor cabecera-simple"><span class="kicker">SERVICIOS</span><h1>Información tributaria sin ruido.</h1><p>Herramientas directas para revisar tu RUC, conocer la Clave SOL y continuar con tus trámites.</p></div></section>
+  <section id="consulta-ruc" class="seccion consulta-minimal">
+    <div class="contenedor consulta-layout">
+      <div class="consulta-formulario">
+        <span class="kicker oscuro">CONSULTA RUC</span>
+        <h2>Ingresa tu número.</h2>
+        <p class="texto-suave">El sistema valida que el RUC tenga exactamente 11 dígitos antes de continuar.</p>
+        <form id="formulario-ruc" class="formulario-moderno tarjeta-formulario">
+          <label for="ruc">Número de RUC</label>
+          <div class="campo-accion"><input id="ruc" name="ruc" type="text" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" placeholder="20123456789" required><button class="boton boton-primario" type="submit">Validar</button></div>
+        </form>
+      </div>
+      <div id="resultado-ruc" class="resultado-ruc resultado-oculto" aria-live="polite">
+        <span id="estado-consulta" class="chip">RUC validado</span>
+        <h3>Validación completada</h3>
+        <div class="dato-resultado"><span>RUC</span><strong id="ruc-consultado">-</strong></div>
+        <div class="dato-resultado"><span>Formato</span><strong id="estado-ruc">-</strong></div>
+        <div class="dato-resultado"><span>Siguiente paso</span><strong id="condicion-ruc">-</strong></div>
+        <a class="enlace-oficial" href="https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/jcrS00Alias" target="_blank" rel="noopener noreferrer">Consultar estado oficial en SUNAT →</a>
+      </div>
+    </div>
+  </section>
+  <section class="seccion paneles-info">
+    <div class="contenedor orientacion-grid">
+      <article><span class="numero">01</span><h3>Clave SOL</h3><p>Credencial para acceder a servicios y operaciones en línea vinculadas con tu información tributaria.</p></article>
+      <article><span class="numero">02</span><h3>Datos necesarios</h3><p>Ten a la mano tu nombre completo, RUC de 11 dígitos y un correo electrónico válido.</p></article>
+      <article><span class="numero">03</span><h3>Seguimiento</h3><p>Al registrar una solicitud se genera un código único para identificarla.</p></article>
+    </div>
+  </section>
+</main>
+<footer class="pie">
+  <div class="contenedor pie-contenido">
+    <div class="pie-marca"><strong>◆ SUNAT</strong><span>Administración tributaria nacional</span></div>
+    <div class="pie-enlaces"><a href="servicios.html">Servicios</a><a href="login.html">Acceso</a><a href="contacto.html">Contacto</a></div>
+  </div>
+</footer>
+<script type="module" src="js/servicios/servicios.js"></script>
+<script type="module" src="js/interfaz/animaciones.js"></script></body>
+</html>

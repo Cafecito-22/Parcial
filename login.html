@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Crear cuenta e iniciar sesión en SUNAT">
+  <title>Acceso | SUNAT Perú</title>
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="pagina-acceso">
+<header class="cabecera-sitio">
+  <div class="barra-gobierno">
+    <div class="contenedor barra-gobierno-contenido">
+      <a class="marca-estado" href="index.html" aria-label="Ir al inicio">
+        <span class="pe">PE</span>
+        <span><strong>gob.pe</strong><small>Plataforma digital del Estado Peruano</small></span>
+      </a>
+      <span class="estado-servicio"><i></i> Servicios disponibles</span>
+    </div>
+  </div>
+  <div class="navegacion-principal">
+    <div class="contenedor nav-contenido">
+      <a class="marca-sunat" href="index.html"><span class="rombo">◆</span><span>SUNAT</span></a>
+      <nav class="menu" aria-label="Navegación principal">
+        <a href="index.html">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="registro.html">Clave SOL</a>
+        <a href="cronograma.html">Cronograma</a>
+        <a href="contacto.html">Contacto</a>
+      <a href="consulta.html">Mis solicitudes</a><a href="panel.html">Panel</a></nav>
+      <a class="boton boton-cuenta" href="login.html">Mi cuenta</a>
+    </div>
+  </div>
+</header>
+<main class="acceso-main acceso-minimal">
+  <section class="acceso-layout-pantalla">
+    <div class="acceso-visual"><div class="acceso-visual-contenido"><span class="kicker">ACCESO SEGURO</span><h1>Tu cuenta.<br>Tus solicitudes.<br>Un solo lugar.</h1><p>Inicia sesión para registrar y consultar tus trámites de forma ordenada.</p></div></div>
+    <div class="acceso-formulario-zona">
+      <div class="panel-acceso">
+        <div class="pestanas-acceso" role="tablist" aria-label="Opciones de acceso">
+          <button type="button" class="pestana activa" data-panel="login">Iniciar sesión</button>
+          <button type="button" class="pestana" data-panel="registro">Crear cuenta</button>
+        </div>
+        <div id="panel-login" class="panel-formulario activo">
+          <span class="kicker oscuro">MI CUENTA</span><h2>Bienvenido</h2><p>Ingresa con tu correo y contraseña.</p>
+          <form id="form-login" class="formulario-moderno">
+            <label for="login-correo">Correo electrónico</label><input id="login-correo" name="correo" type="email" placeholder="nombre@correo.com" required>
+            <label for="login-contrasena">Contraseña</label><input id="login-contrasena" name="contrasena" type="password" minlength="4" placeholder="Tu contraseña" required>
+            <button class="boton boton-primario ancho" type="submit">Ingresar</button><p id="mensaje-login" class="mensaje-form" aria-live="polite"></p>
+          </form>
+        </div>
+        <div id="panel-registro" class="panel-formulario">
+          <span class="kicker oscuro">NUEVA CUENTA</span><h2>Crea tu acceso</h2><p>Completa tus datos para registrarte.</p>
+          <form id="form-registro-usuario" class="formulario-moderno">
+            <label for="registro-nombre">Nombre completo</label><input id="registro-nombre" name="nombre" type="text" maxlength="120" placeholder="Nombres y apellidos" required>
+            <label for="registro-correo">Correo electrónico</label><input id="registro-correo" name="correo" type="email" maxlength="120" placeholder="nombre@correo.com" required>
+            <label for="registro-contrasena">Contraseña</label><input id="registro-contrasena" name="contrasena" type="password" minlength="4" maxlength="255" placeholder="Mínimo 4 caracteres" required>
+            <button class="boton boton-primario ancho" type="submit">Crear cuenta</button><p id="mensaje-registro" class="mensaje-form" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="pie">
+  <div class="contenedor pie-contenido">
+    <div class="pie-marca"><strong>◆ SUNAT</strong><span>Administración tributaria nacional</span></div>
+    <div class="pie-enlaces"><a href="servicios.html">Servicios</a><a href="login.html">Acceso</a><a href="contacto.html">Contacto</a></div>
+  </div>
+</footer>
+
+<script type="module" src="js/auth/login.js"></script>
+<script type="module" src="js/interfaz/animaciones.js"></script></body>
+</html>

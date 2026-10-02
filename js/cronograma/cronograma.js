@@ -1,0 +1,2 @@
+function fechaActual(){const hoy=new Date();return `${String(hoy.getDate()).padStart(2,"0")}/${String(hoy.getMonth()+1).padStart(2,"0")}/${hoy.getFullYear()}`}
+document.querySelectorAll("#cronograma tbody tr").forEach(fila=>{if(fila.children[1]?.textContent.trim()===fechaActual()){fila.classList.add("fila-actual");fila.children[2].textContent="Vence hoy"}});
