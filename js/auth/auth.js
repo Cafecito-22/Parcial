@@ -1,22 +1,10 @@
-import { sql, verificarConexion } from "../config/neon-config.js";
-
-export async function registrarUsuario(nombre, correo, contrasena){
-  verificarConexion();
-  await sql`INSERT INTO usuarios (nombre, correo, contrasena, rol) VALUES (${nombre}, ${correo}, ${contrasena}, 'cliente')`;
+import { api } from '../config/neon-config.js';
+export async function registrarUsuario(nombre,correo,contrasena){await api('registrarUsuario',{nombre,correo,contrasena});}
+export async function iniciarSesion(correo,contrasena){
+ const resultado=await api('iniciarSesion',{correo,contrasena});
+ if(!resultado.usuario)return null;
+ sessionStorage.setItem('usuario',JSON.stringify(resultado.usuario));return resultado.usuario;
 }
-
-export async function iniciarSesion(correo, contrasena){
-  verificarConexion();
-  const filas = await sql`
-    SELECT id, nombre, correo, rol FROM usuarios
-    WHERE correo = ${correo} AND contrasena = ${contrasena}
-    LIMIT 1;
-  `;
-  if(filas.length === 0) return null;
-  sessionStorage.setItem("usuario", JSON.stringify(filas[0]));
-  return filas[0];
-}
-
 export function obtenerUsuario(){
   const dato = sessionStorage.getItem("usuario");
   try { const u = dato ? JSON.parse(dato) : null; return u && Number.isInteger(u.id) && ["cliente","administrador","empleado"].includes(u.rol) ? u : null; } catch { sessionStorage.removeItem("usuario"); return null; }
@@ -32,7 +20,8 @@ export function exigirSesion(){
   return usuario;
 }
 
-export function cerrarSesion(){
+export async function cerrarSesion(){
+  try { await api("cerrarSesion"); } catch { /* Se limpia también la sesión visual. */ }
   sessionStorage.removeItem("usuario");
   location.href = "login.html";
 }

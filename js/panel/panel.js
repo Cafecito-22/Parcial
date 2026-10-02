@@ -1,11 +1,11 @@
-import {sql} from '../config/neon-config.js';
+import {api} from '../config/neon-config.js';
 import {exigirRol} from '../auth/auth.js';
 import {datos,mensaje,tabla} from '../solicitudes/interfaz.js';
 const usuario=exigirRol(['administrador','empleado']),form=document.getElementById('form-panel');let editando=null;
-export async function listarTodos(){if(!usuario)throw new Error('Acceso denegado');return sql`SELECT * FROM solicitudes_clave_sol ORDER BY id DESC`;}
-export async function crearRegistro(d){if(!usuario)throw new Error('Acceso denegado');const codigo='SOL-'+crypto.randomUUID();return sql`INSERT INTO solicitudes_clave_sol (codigo_seguimiento,nombre_contribuyente,ruc,correo,estado) VALUES (${codigo},${d.nombre_contribuyente},${d.ruc},${d.correo},${d.estado}) RETURNING id`;}
-export async function actualizarComoPanel(id,d){if(!usuario)throw new Error('Acceso denegado');return sql`UPDATE solicitudes_clave_sol SET nombre_contribuyente=${d.nombre_contribuyente},ruc=${d.ruc},correo=${d.correo},estado=${d.estado} WHERE id=${id} RETURNING id`;}
-export async function eliminarRegistro(id){if(!usuario)throw new Error('Acceso denegado');return sql`DELETE FROM solicitudes_clave_sol WHERE id=${id} RETURNING id`;}
+export async function listarTodos(){if(!usuario)throw new Error('Acceso denegado');return api('listarTodos');}
+export async function crearRegistro(d){if(!usuario)throw new Error('Acceso denegado');return api('crearPanel',d);}
+export async function actualizarComoPanel(id,d){if(!usuario)throw new Error('Acceso denegado');return api('actualizarPanel',{id,...d});}
+export async function eliminarRegistro(id){if(!usuario)throw new Error('Acceso denegado');return api('eliminarPanel',{id});}
 function editar(f){editando=f.id;for(const k of ['nombre_contribuyente','ruc','correo','estado'])form.elements[k].value=f[k];mensaje('Editando solicitud '+f.codigo_seguimiento,true);form.scrollIntoView({behavior:'smooth'});}
 let eliminando=false;
 async function eliminar(f){if(eliminando||!confirm('¿Eliminar definitivamente la solicitud '+f.codigo_seguimiento+'?'))return;eliminando=true;try{const filas=await eliminarRegistro(f.id);if(!filas.length)throw new Error('La solicitud ya fue eliminada.');if(editando===f.id){editando=null;form.reset();}await cargar();mensaje('Solicitud eliminada correctamente.',true);}catch(e){mensaje(e.message);}finally{eliminando=false;}}

@@ -1,4 +1,4 @@
-import { sql, verificarConexion } from "../config/neon-config.js";
+import { api } from "../config/neon-config.js";
 import { exigirRol, cerrarSesion } from "../auth/auth.js";
 
 const usuario = exigirRol(["cliente"]);
@@ -10,16 +10,8 @@ if(usuario){
 document.getElementById("boton-cerrar-sesion")?.addEventListener("click", cerrarSesion);
 
 export async function guardarSolicitudClaveSol(datos){
-  verificarConexion();
   if(!usuario) throw new Error("Inicia sesión como cliente.");
-  const codigo = "SOL-" + crypto.randomUUID();
-  const resultado = await sql`
-    INSERT INTO solicitudes_clave_sol
-      (codigo_seguimiento, nombre_contribuyente, ruc, correo, id_usuario, estado)
-    VALUES
-      (${codigo}, ${datos.nombre}, ${datos.ruc}, ${datos.correo}, ${usuario.id}, 'registrado')
-    RETURNING codigo_seguimiento;
-  `;
+  const resultado = await api('crearSolicitud', {nombre_contribuyente:datos.nombre,ruc:datos.ruc,correo:datos.correo});
   return resultado[0].codigo_seguimiento;
 }
 
