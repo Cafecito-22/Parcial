@@ -13,7 +13,12 @@ function clave(v){if(typeof v!=='string'||v.length<4||v.length>120)fallo('La con
 export function validarSolicitud(b){const nombre=texto(b.nombre_contribuyente,3,120),ruc=texto(b.ruc,11,11),email=correo(b.correo);if(!/^\d{11}$/.test(ruc))fallo('El RUC debe tener 11 dígitos.');return {nombre,ruc,correo:email};}
 function idSolicitud(v){if(!Number.isSafeInteger(v)||v<=0)fallo('Solicitud inválida.');return v;}
 function estado(v){if(!['registrado','atendido','rechazado'].includes(v))fallo('Estado inválido.');return v;}
-export function crearHandler(sql,secreto){return async function handler(req,res){
+export function turnoActual(fecha=new Date()){
+ const hora=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'America/Lima',hour:'2-digit',hourCycle:'h23'}).format(fecha));
+ return hora>=6&&hora<14?'manana':hora>=14&&hora<22?'tarde':'noche';
+}
+export function permisoTurno(usuario,fecha=new Date()){return usuario.rol==='administrador'||(usuario.rol==='empleado'&&usuario.turno===turnoActual(fecha));}
+export function crearHandler(sql,secreto,ahora=()=>new Date()){return async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
  if(req.method!=='POST')return res.status(405).json({error:'Método no permitido.'});
  if(req.headers.origin){try{if(new URL(req.headers.origin).host!==req.headers.host)return res.status(403).json({error:'Origen no permitido.'});}catch{return res.status(403).json({error:'Origen no permitido.'});}}
@@ -28,16 +33,17 @@ export function crearHandler(sql,secreto){return async function handler(req,res)
  }
  if(b.accion==='iniciarSesion'){
  const email=correo(b.correo),password=clave(b.contrasena);
- const filas=await sql`SELECT id,nombre,correo,rol,contrasena FROM usuarios WHERE correo=${email} LIMIT 1`;
+ const filas=await sql`SELECT id,nombre,correo,rol,turno,contrasena FROM usuarios WHERE correo=${email} LIMIT 1`;
  if(!filas.length||!verificarClave(password,filas[0].contrasena)){cookie('',0);return res.status(200).json({usuario:null});}
  const u=filas[0];if(!roles.includes(u.rol))fallo('Rol inválido.',403);
  if(!u.contrasena.startsWith('scrypt$')){const hash=hashClave(password);await sql`UPDATE usuarios SET contrasena=${hash} WHERE id=${u.id} AND contrasena=${u.contrasena}`;}
- cookie(crearToken(u.id,secreto),28800);return res.status(200).json({usuario:{id:u.id,nombre:u.nombre,correo:u.correo,rol:u.rol}});
+ cookie(crearToken(u.id,secreto),28800);return res.status(200).json({usuario:{id:u.id,nombre:u.nombre,correo:u.correo,rol:u.rol,turno:u.turno}});
  }
  const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('sunat_sesion='))?.slice(13);
  const id=leerToken(token||'',secreto);if(!id)fallo('Inicia sesión nuevamente para continuar.',401);
- const usuarios=await sql`SELECT id,rol FROM usuarios WHERE id=${id}`;const u=usuarios[0];if(!u||!roles.includes(u.rol))fallo('Sesión inválida.',401);
+ const usuarios=await sql`SELECT id,rol,turno FROM usuarios WHERE id=${id}`;const u=usuarios[0];if(!u||!roles.includes(u.rol))fallo('Sesión inválida.',401);
  const esPanel=['administrador','empleado'].includes(u.rol);let filas;
+ if(b.accion==='miTurno'){if(!esPanel)fallo('Acceso denegado.',403);return res.status(200).json({turno:u.turno,actual:turnoActual(ahora()),puedeEditar:permisoTurno(u,ahora()),rol:u.rol});}
  if(['misSolicitudes','miSolicitud','crearSolicitud','actualizarPropia'].includes(b.accion)){
  if(u.rol!=='cliente')fallo('Acceso solo para clientes.',403);
  if(b.accion==='misSolicitudes')filas=await sql`SELECT * FROM solicitudes_clave_sol WHERE id_usuario=${u.id} ORDER BY id DESC`;
@@ -46,6 +52,7 @@ export function crearHandler(sql,secreto){return async function handler(req,res)
  if(b.accion==='actualizarPropia'){const sid=idSolicitud(b.id),d=validarSolicitud(b);filas=await sql`UPDATE solicitudes_clave_sol SET nombre_contribuyente=${d.nombre},ruc=${d.ruc},correo=${d.correo} WHERE id=${sid} AND id_usuario=${u.id} AND estado='registrado' RETURNING id`;}
  }else if(['listarTodos','crearPanel','actualizarPanel','eliminarPanel'].includes(b.accion)){
  if(!esPanel)fallo('Acceso denegado al panel.',403);
+ if(b.accion!=='listarTodos'&&!permisoTurno(u,ahora()))fallo('Tu turno no está activo. Puedes consultar; las modificaciones están disponibles durante tu turno.',403);
  if(b.accion==='listarTodos')filas=await sql`SELECT * FROM solicitudes_clave_sol ORDER BY id DESC`;
  if(b.accion==='crearPanel'){const d=validarSolicitud(b),e=estado(b.estado),codigo='SOL-'+randomUUID();filas=await sql`INSERT INTO solicitudes_clave_sol(codigo_seguimiento,nombre_contribuyente,ruc,correo,estado) VALUES (${codigo},${d.nombre},${d.ruc},${d.correo},${e}) RETURNING id`;}
  if(b.accion==='actualizarPanel'){const sid=idSolicitud(b.id),d=validarSolicitud(b),e=estado(b.estado);filas=await sql`UPDATE solicitudes_clave_sol SET nombre_contribuyente=${d.nombre},ruc=${d.ruc},correo=${d.correo},estado=${e} WHERE id=${sid} RETURNING id`;}

@@ -17,4 +17,10 @@ CSS independiente para cada HTML y JS modular. Inicio, servicios, contacto, cron
 Para ejecutar localmente usar Vercel CLI (`vercel dev`) y DATABASE_URL privada; Live Server por sí solo no ejecuta la API. Consultar sql/02_datos_prueba.sql para cuentas de demostración. Nunca usar datos personales reales en esta tarea.
 
 ## Pruebas
+12 pruebas locales aprobadas. En Neon se verificaron los 14 accesos y el CRUD de cada rol, incluida la restricción de los tres turnos.
 `npm test` verifica firmas de sesión, compatibilidad de contraseñas, protección de roles, propietario y estado de actualización, y rechazo de operaciones desconocidas. Las comprobaciones remotas necesitan un despliegue con DATABASE_URL configurada.
+
+## Turnos de empleados (hora de Perú)
+Mañana: 06:00–14:00. Tarde: 14:00–22:00. Noche–madrugada: 22:00–06:00.
+Cada empleado puede consultar todos los registros en cualquier momento y realizar el CRUD, incluido cambiar estados, durante su turno. El administrador puede hacerlo a cualquier hora. La API verifica el turno para cada escritura usando America/Lima; el navegador muestra el horario y la disponibilidad.
+Ejecutar sql/03_turnos.sql para añadir la columna y scripts/cargar-demo.mjs para 10 clientes, 1 administrador, 3 empleados y 30 solicitudes. Las claves se generan aleatoriamente y se guardan solo en el archivo privado indicado por CREDENCIALES_ARCHIVO. No subir ese archivo a GitHub. Las cuentas existentes no se reemplazan.
