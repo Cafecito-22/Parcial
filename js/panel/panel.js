@@ -31,6 +31,134 @@ function etiquetaEstado(estado){
   return `<span class="estado estado-${escapar(valor)}">${escapar(valor.replace("_"," "))}</span>`;
 }
 
+const turnos = {
+  manana: { clave: "manana", nombre: "Mañana", horario: "06:00–14:00", inicio: 6, fin: 14 },
+  tarde: { clave: "tarde", nombre: "Tarde", horario: "14:00–22:00", inicio: 14, fin: 22 },
+  noche: { clave: "noche", nombre: "Noche", horario: "22:00–06:00", inicio: 22, fin: 6 }
+};
+
+let empleadosHorario = [];
+
+function normalizarTurno(valor){
+  return String(valor || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function partesLima(){
+  const formato = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Lima",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  });
+  const partes = Object.fromEntries(formato.formatToParts(new Date()).filter(p => p.type !== "literal").map(p => [p.type, p.value]));
+  return {
+    year: Number(partes.year),
+    month: Number(partes.month),
+    day: Number(partes.day),
+    hour: Number(partes.hour),
+    minute: Number(partes.minute),
+    second: Number(partes.second)
+  };
+}
+
+function turnoPorHora(hora){
+  if(hora >= 6 && hora < 14) return "manana";
+  if(hora >= 14 && hora < 22) return "tarde";
+  return "noche";
+}
+
+function fechaUtcDesdeLima(partes){
+  return new Date(Date.UTC(partes.year, partes.month - 1, partes.day, 12));
+}
+
+function inicioSemanaLima(){
+  const hoy = fechaUtcDesdeLima(partesLima());
+  const dia = hoy.getUTCDay();
+  const retroceso = dia === 0 ? 6 : dia - 1;
+  const lunes = new Date(hoy);
+  lunes.setUTCDate(hoy.getUTCDate() - retroceso);
+  return lunes;
+}
+
+function nombreEmpleado(empleado){
+  return `<div class="empleado-turno"><strong>${escapar(empleado.nombre)}</strong><span>${escapar(empleado.correo)}</span></div>`;
+}
+
+function actualizarTurnoActual(){
+  if(!esAdmin) return;
+  const partes = partesLima();
+  const clave = turnoPorHora(partes.hour);
+  const turno = turnos[clave];
+  const activos = empleadosHorario.filter(e => normalizarTurno(e.turno) === clave);
+  const contenedor = document.getElementById("turno-actual");
+  const hora = `${String(partes.hour).padStart(2,"0")}:${String(partes.minute).padStart(2,"0")}:${String(partes.second).padStart(2,"0")}`;
+  const fecha = new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", weekday: "long", day: "2-digit", month: "long" }).format(new Date());
+  document.getElementById("hora-turno").textContent = hora;
+  document.getElementById("fecha-turno").textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+  const nombres = activos.length ? activos.map(e => e.nombre).join(", ") : "Sin empleado asignado";
+  contenedor.className = `turno-actual turno-${clave}`;
+  contenedor.innerHTML = `<div class="pulso-turno"></div><div><span>En turno ahora · ${turno.nombre} · ${turno.horario}</span><strong>${escapar(nombres)}</strong></div>`;
+}
+
+function renderizarHorarioSemanal(){
+  if(!esAdmin) return;
+  const contenedor = document.getElementById("horario-semanal");
+  const sinTurno = document.getElementById("empleados-sin-turno");
+  const grupos = { manana: [], tarde: [], noche: [] };
+  const pendientes = [];
+  empleadosHorario.forEach(empleado => {
+    const clave = normalizarTurno(empleado.turno);
+    if(grupos[clave]) grupos[clave].push(empleado);
+    else pendientes.push(empleado);
+  });
+  const hoyPartes = partesLima();
+  const hoyClave = `${hoyPartes.year}-${String(hoyPartes.month).padStart(2,"0")}-${String(hoyPartes.day).padStart(2,"0")}`;
+  const turnoActual = turnoPorHora(hoyPartes.hour);
+  const lunes = inicioSemanaLima();
+  const nombresDias = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+  contenedor.innerHTML = nombresDias.map((nombre, indice) => {
+    const fecha = new Date(lunes);
+    fecha.setUTCDate(lunes.getUTCDate() + indice);
+    const claveFecha = `${fecha.getUTCFullYear()}-${String(fecha.getUTCMonth()+1).padStart(2,"0")}-${String(fecha.getUTCDate()).padStart(2,"0")}`;
+    const fechaTexto = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "short", timeZone: "UTC" }).format(fecha);
+    const filas = Object.values(turnos).map(turno => {
+      const empleados = grupos[turno.clave];
+      const activo = claveFecha === hoyClave && turno.clave === turnoActual ? " activo" : "";
+      const personas = empleados.length ? empleados.map(nombreEmpleado).join("") : `<div class="empleado-turno vacante"><strong>Sin asignar</strong><span>Disponible para asignación</span></div>`;
+      return `<div class="fila-turno ${turno.clave}${activo}"><div class="hora-bloque"><strong>${turno.nombre}</strong><span>${turno.horario}</span></div><div class="personas-turno">${personas}</div></div>`;
+    }).join("");
+    return `<article class="dia-horario${claveFecha === hoyClave ? " hoy" : ""}"><div class="dia-titulo"><strong>${nombre}</strong><span>${fechaTexto}</span></div>${filas}</article>`;
+  }).join("");
+  if(pendientes.length){
+    sinTurno.classList.remove("oculto");
+    sinTurno.innerHTML = `<strong>Empleados sin turno asignado:</strong> ${pendientes.map(e => escapar(e.nombre)).join(", ")}`;
+  }else{
+    sinTurno.classList.add("oculto");
+    sinTurno.innerHTML = "";
+  }
+}
+
+async function cargarHorario(){
+  if(!esAdmin) return;
+  const contenedor = document.getElementById("horario-semanal");
+  try{
+    empleadosHorario = await sql`
+      SELECT id, nombre, correo, turno
+      FROM usuarios
+      WHERE rol = 'empleado'
+      ORDER BY nombre ASC;
+    `;
+    renderizarHorarioSemanal();
+    actualizarTurnoActual();
+  }catch(error){
+    contenedor.innerHTML = `<div class="horario-error">${escapar(error.message)}</div>`;
+  }
+}
+
 let registros = [];
 
 async function listar(){
@@ -159,3 +287,8 @@ document.getElementById("form-revision")?.addEventListener("submit", async event
 });
 
 listar();
+if(esAdmin){
+  cargarHorario();
+  actualizarTurnoActual();
+  setInterval(actualizarTurnoActual, 1000);
+}
