@@ -1,37 +1,62 @@
-import { api } from '../config/neon-config.js';
-export async function registrarUsuario(nombre,correo,contrasena){await api('registrarUsuario',{nombre,correo,contrasena});}
-export async function iniciarSesion(correo,contrasena){
- const resultado=await api('iniciarSesion',{correo,contrasena});
- if(!resultado.usuario)return null;
- sessionStorage.setItem('usuario',JSON.stringify(resultado.usuario));return resultado.usuario;
-}
-export function obtenerUsuario(){
-  const dato = sessionStorage.getItem("usuario");
-  try { const u = dato ? JSON.parse(dato) : null; return u && Number.isInteger(u.id) && ["cliente","administrador","empleado"].includes(u.rol) ? u : null; } catch { sessionStorage.removeItem("usuario"); return null; }
+import { sql, verificarConexion } from "../config/neon-config.js";
+
+function normalizarUsuario(usuario){
+  if(!usuario) return null;
+  return {...usuario, rol: usuario.rol || "cliente"};
 }
 
-export function exigirSesion(){
+export async function registrarUsuario(nombre, correo, contrasena){
+  verificarConexion();
+  const filas = await sql`
+    INSERT INTO usuarios (nombre, correo, contrasena, rol)
+    VALUES (${nombre}, ${correo}, ${contrasena}, 'cliente')
+    RETURNING id, nombre, correo, rol;
+  `;
+  const usuario = normalizarUsuario(filas[0]);
+  sessionStorage.setItem("usuario", JSON.stringify(usuario));
+  return usuario;
+}
+
+export async function iniciarSesion(correo, contrasena){
+  verificarConexion();
+  const filas = await sql`
+    SELECT id, nombre, correo, COALESCE(rol, 'cliente') AS rol
+    FROM usuarios
+    WHERE LOWER(correo) = LOWER(${correo}) AND contrasena = ${contrasena}
+    LIMIT 1;
+  `;
+  if(filas.length === 0) return null;
+  const usuario = normalizarUsuario(filas[0]);
+  sessionStorage.setItem("usuario", JSON.stringify(usuario));
+  return usuario;
+}
+
+export function obtenerUsuario(){
+  const dato = sessionStorage.getItem("usuario");
+  if(!dato) return null;
+  try{return normalizarUsuario(JSON.parse(dato));}catch{return null;}
+}
+
+export function destinoPorRol(usuario){
+  if(!usuario) return "login.html";
+  return usuario.rol === "administrador" || usuario.rol === "empleado" ? "panel.html" : "cuenta.html";
+}
+
+export function exigirSesion(rolesPermitidos=[]){
   const usuario = obtenerUsuario();
   if(!usuario){
-    const retorno = encodeURIComponent(location.pathname.split("/").pop() || "clave-sol.html");
+    const retorno = encodeURIComponent(location.pathname.split("/").pop() + location.search);
     location.href = `login.html?retorno=${retorno}`;
+    return null;
+  }
+  if(rolesPermitidos.length && !rolesPermitidos.includes(usuario.rol)){
+    location.href = destinoPorRol(usuario);
     return null;
   }
   return usuario;
 }
 
-export async function cerrarSesion(){
-  try { await api("cerrarSesion"); } catch { /* Se limpia también la sesión visual. */ }
+export function cerrarSesion(){
   sessionStorage.removeItem("usuario");
   location.href = "login.html";
-}
-
-
-export function exigirRol(roles){
- const u=exigirSesion();
- if(!u) return null;
- if(!roles.includes(u.rol)){ location.href=u.rol==='cliente'?'consulta.html':'panel.html'; return null; }
- document.getElementById('nombre-sesion')?.replaceChildren(document.createTextNode(`${u.nombre} (${u.rol})`));
- document.getElementById('boton-cerrar-sesion')?.addEventListener('click',cerrarSesion);
- return u;
 }

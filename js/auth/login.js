@@ -1,66 +1,72 @@
-import { registrarUsuario, iniciarSesion } from "./auth.js";
+import { registrarUsuario, iniciarSesion, obtenerUsuario, destinoPorRol, cerrarSesion } from "./auth.js";
 
-const pestanasAcceso=document.querySelectorAll(".pestana");
-pestanasAcceso.forEach(boton=>{boton.addEventListener("click",()=>{pestanasAcceso.forEach(item=>item.classList.remove("activa"));document.querySelectorAll(".panel-formulario").forEach(panel=>panel.classList.remove("activo"));boton.classList.add("activa");document.getElementById(`panel-${boton.dataset.panel}`).classList.add("activo")})});
-if(location.protocol==="file:"){document.querySelectorAll("#form-login, #form-registro-usuario").forEach(formulario=>{formulario.addEventListener("submit",evento=>{evento.preventDefault();const mensaje=formulario.querySelector(".mensaje-form");mensaje.textContent="Abre el proyecto con Live Server para conectar con la base de datos.";mensaje.className="mensaje-form error"})})}
+const tabs = document.querySelectorAll(".tab");
+const panels = document.querySelectorAll(".panel-auth");
+const zonaAuth = document.getElementById("zona-auth");
+const sesionActiva = document.getElementById("sesion-activa");
+const usuarioActual = obtenerUsuario();
 
-const formRegistro = document.getElementById("form-registro-usuario");
-if(formRegistro){
-  formRegistro.addEventListener("submit", async (evento) => {
-    evento.preventDefault();
-    const mensaje = document.getElementById("mensaje-registro");
-    const datos = new FormData(formRegistro);
-    const nombre = String(datos.get("nombre") || "").trim();
-    const correo = String(datos.get("correo") || "").trim().toLowerCase();
-    const contrasena = String(datos.get("contrasena") || "");
+function abrirPanel(nombre){
+  tabs.forEach(tab => tab.classList.toggle("activo", tab.dataset.panel === nombre));
+  panels.forEach(panel => panel.classList.toggle("activo", panel.id === `panel-${nombre}`));
+}
 
-    if(nombre.length < 3 || !correo.includes("@") || contrasena.length < 4){
-      mensaje.textContent = "Revisa los datos ingresados.";
-      mensaje.className = "mensaje-form error";
+tabs.forEach(tab => tab.addEventListener("click", () => abrirPanel(tab.dataset.panel)));
+
+if(usuarioActual){
+  zonaAuth.classList.add("oculto");
+  sesionActiva.classList.remove("oculto");
+  document.getElementById("sesion-nombre").textContent = usuarioActual.nombre;
+  document.getElementById("sesion-correo").textContent = usuarioActual.correo;
+  document.getElementById("sesion-rol").textContent = usuarioActual.rol === "administrador" ? "Jefe / Administrador" : usuarioActual.rol === "empleado" ? "Trabajador / Empleado" : "Cliente / Contribuyente";
+  document.getElementById("continuar-sesion").addEventListener("click", () => location.href = destinoPorRol(usuarioActual));
+  document.getElementById("cerrar-sesion-login").addEventListener("click", cerrarSesion);
+}
+
+document.getElementById("form-login")?.addEventListener("submit", async evento => {
+  evento.preventDefault();
+  const mensaje = document.getElementById("mensaje-login");
+  const datos = new FormData(evento.currentTarget);
+  mensaje.textContent = "Verificando cuenta...";
+  mensaje.className = "mensaje";
+  try{
+    const usuario = await iniciarSesion(String(datos.get("correo")||"").trim(), String(datos.get("contrasena")||""));
+    if(!usuario){
+      mensaje.textContent = "Correo o contraseña incorrectos.";
+      mensaje.className = "mensaje error";
       return;
     }
+    mensaje.textContent = `Bienvenido, ${usuario.nombre}.`;
+    mensaje.className = "mensaje ok";
+    const retorno = new URLSearchParams(location.search).get("retorno");
+    setTimeout(() => location.href = retorno || destinoPorRol(usuario), 350);
+  }catch(error){
+    mensaje.textContent = error.message.includes("Failed") ? "No se pudo conectar con la base de datos." : error.message;
+    mensaje.className = "mensaje error";
+  }
+});
 
-    mensaje.textContent = "Creando cuenta...";
-    mensaje.className = "mensaje-form";
-    try{
-      await registrarUsuario(nombre, correo, contrasena);
-      mensaje.textContent = "Cuenta creada. Ya puedes iniciar sesión.";
-      mensaje.className = "mensaje-form ok";
-      formRegistro.reset();
-      document.querySelector('[data-panel="login"]')?.click();
-    }catch(error){
-      mensaje.textContent = error.message.includes("unique") || error.message.includes("duplicate")
-        ? "Ese correo ya está registrado."
-        : error.message;
-      mensaje.className = "mensaje-form error";
-    }
-  });
-}
-
-const formLogin = document.getElementById("form-login");
-if(formLogin){
-  formLogin.addEventListener("submit", async (evento) => {
-    evento.preventDefault();
-    const mensaje = document.getElementById("mensaje-login");
-    const datos = new FormData(formLogin);
-    const correo = String(datos.get("correo") || "").trim().toLowerCase();
-    const contrasena = String(datos.get("contrasena") || "");
-
-    mensaje.textContent = "Verificando...";
-    mensaje.className = "mensaje-form";
-    try{
-      const usuario = await iniciarSesion(correo, contrasena);
-      if(!usuario){
-        mensaje.textContent = "Correo o contraseña incorrectos.";
-        mensaje.className = "mensaje-form error";
-        return;
-      }
-      mensaje.textContent = `Bienvenido, ${usuario.nombre}.`;
-      mensaje.className = "mensaje-form ok";
-      location.href = usuario.rol === 'cliente' ? 'registro.html' : 'panel.html';
-    }catch(error){
-      mensaje.textContent = error.message;
-      mensaje.className = "mensaje-form error";
-    }
-  });
-}
+document.getElementById("form-registro")?.addEventListener("submit", async evento => {
+  evento.preventDefault();
+  const mensaje = document.getElementById("mensaje-registro");
+  const datos = new FormData(evento.currentTarget);
+  const nombre = String(datos.get("nombre")||"").trim();
+  const correo = String(datos.get("correo")||"").trim().toLowerCase();
+  const contrasena = String(datos.get("contrasena")||"");
+  if(nombre.length < 3 || !correo.includes("@") || contrasena.length < 4){
+    mensaje.textContent = "Revisa los datos ingresados.";
+    mensaje.className = "mensaje error";
+    return;
+  }
+  mensaje.textContent = "Creando tu cuenta...";
+  mensaje.className = "mensaje";
+  try{
+    const usuario = await registrarUsuario(nombre, correo, contrasena);
+    mensaje.textContent = `Cuenta creada. Bienvenido, ${usuario.nombre}.`;
+    mensaje.className = "mensaje ok";
+    setTimeout(() => location.href = destinoPorRol(usuario), 450);
+  }catch(error){
+    mensaje.textContent = /unique|duplicate/i.test(error.message) ? "Ese correo ya está registrado." : error.message;
+    mensaje.className = "mensaje error";
+  }
+});

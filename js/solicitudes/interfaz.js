@@ -1,9 +1,0 @@
-export function mensaje(texto,ok=false){const e=document.getElementById('mensaje');e.textContent=texto;e.className='mensaje-form '+(ok?'ok':'error');}
-export function datos(form){const d=Object.fromEntries(new FormData(form));for(const k of ['nombre_contribuyente','ruc','correo']) d[k]=String(d[k]||'').trim();if(d.nombre_contribuyente.length<3 || !/^\d{11}$/.test(d.ruc)|| !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo))throw new Error('Revisa nombre, RUC y correo.');return d;}
-export function tabla(filas,panel,onEditar,onEliminar){
- const cont=document.getElementById('listado');cont.replaceChildren();
- if(!filas.length){cont.textContent='No hay solicitudes registradas.';return;}
- const t=document.createElement('table'),head=t.createTHead().insertRow();
- for(const texto of ['Código','Contribuyente','RUC','Correo','Estado',...(panel?['Usuario propietario']:[]),'Acciones']){const th=document.createElement('th');th.scope='col';th.textContent=texto;head.append(th);}
- const b=t.createTBody();for(const f of filas){const r=b.insertRow();for(const k of ['codigo_seguimiento','nombre_contribuyente','ruc','correo','estado',...(panel?['id_usuario']:[])]){const celda=r.insertCell();if(k==='estado'){const etiqueta=document.createElement('span');etiqueta.textContent=f[k];etiqueta.className='estado-etiqueta '+(['registrado','atendido','rechazado'].includes(f[k])?'estado-'+f[k]:'');celda.append(etiqueta);}else celda.textContent=f[k]??'Atención presencial';}const c=r.insertCell();if(panel){for(const [texto,fn] of [['Editar',onEditar],['Eliminar',onEliminar]]){const a=document.createElement('button');a.type='button';a.textContent=texto;a.addEventListener('click',()=>fn(f));c.append(a);}}else if(f.estado==='registrado'){const a=document.createElement('a');a.textContent='Actualizar';a.href='actualizar.html?id='+encodeURIComponent(f.id);c.append(a);}else c.textContent='Edición bloqueada';}cont.append(t);
-}

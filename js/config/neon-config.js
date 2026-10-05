@@ -1,7 +1,9 @@
-// Neon se conecta solo desde el servidor de Vercel.
-export async function api(accion,datos={}){
- const respuesta=await fetch('/api/sunat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,...datos})});
- let contenido;try{contenido=await respuesta.json();}catch{throw new Error('El servidor no está disponible. Revisa el despliegue de Vercel.');}
- if(!respuesta.ok)throw new Error(contenido.error||'No se pudo completar la operación.');
- return contenido;
+import { neon } from "https://esm.sh/@neondatabase/serverless";
+
+const CADENA_NEON = "postgresql://neondb_owner:npg_wAJhQVIe3t1g@ep-still-violet-b5der5qx-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+
+export const sql = neon(CADENA_NEON);
+
+export function verificarConexion(){
+  if(!sql) throw new Error("No se pudo iniciar la conexión con Neon.");
 }
